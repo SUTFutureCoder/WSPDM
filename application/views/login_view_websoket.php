@@ -9,7 +9,6 @@
         <script type="text/javascript" src="<?= base_url('js/swfobject.js')?>"></script>
         <script type="text/javascript" src="<?= base_url('js/web_socket.js')?>"></script>
         <script type="text/javascript" src="<?= base_url('js/json.js')?>"></script>
-        <script type="text/javascript" src="<?= base_url('js/jquery.form.js')?>"></script>
         <style>
             body
             {
@@ -77,7 +76,7 @@
                         alert(result[1]);
                 }          
             } else {
-                location.href='<?= base_url("index.php/ControlCenter")?>';
+                location.href='<?= base_url("index.php/control_center")?>';
             }
             
                         
@@ -90,54 +89,19 @@
           ws.onerror = function() {
               console.log("出现错误");              
           };          
-        </script>    
-        <script>
-            var options = {
-                dataType : "json",
-                beforeSubmit : function (){
-                    $(".btn").html("正在提交中，请稍后");
-                    $(".btn").attr("disabled", "disabled");
-                },
-                success : function (result){
-                    console.log(result);
-                    switch (result[0])
-                    {
-                        case 1:
-                            if (!$("#ping").html()){
-                                alert('无法连接WebSocket服务器，请使用控制台开启Workerman');
-                                $(".btn").html("登录");
-                                $(".btn").removeAttr("disabled");  
-                                return ;
-                            }
-                            location.href='<?= base_url("index.php/ControlCenter")?>';
-                            break;
-                        default:
-                            alert(result[1]);
-                    }    
-                    
-                    if (1 != result[0])
-                    {
-                        alert(result[1]);
-                    }
-                    $(".btn").html("登录");
-                    $(".btn").removeAttr("disabled");                    
-                }
-            };
-            
-            $(".form-signin").ajaxForm(options);  
-        </script>
+        </script>        
 </head>
 <body>
     <div class="col-sm-8 col-sm-offset-2">
-        <form action="<?= base_url("index.php/index/PassCheck")?>" class="form-signin" role="form" method="post">
+        <form role="form">
         <h2 class="form-signin-heading">欢迎使用WSPDM</h2>
         <br/>
         <div class="form-group">            
-        <input type="text" name="db_username" id="db_username" class="form-control" placeholder="数据库账号" required="" autofocus="">
-        <input type="password" name="db_password" id="db_password" class="form-control" placeholder="数据库密码" required="">            
+        <input type="text" id="db_username" class="form-control " placeholder="数据库账号" required="" autofocus="">
+        <input type="password"  id="db_password" class="form-control" placeholder="数据库密码" required="">            
         </div>
         <br/>
-        <button type="submit"  class="btn btn-lg btn-primary btn-block">登录数据库</button>
+        <input onclick="CheckPW()" class="btn btn-lg btn-primary btn-block" value="登录数据库">
         </form>
     </div>
     <div class="footer">
@@ -145,5 +109,15 @@
           <p class="text-muted">Ping:<a id="ping"></a><br/>WSPDM<br/>版权所有(C) 2014-<?= date('Y')?> 沈阳工业大学ACM实验室 沈阳工业大学网络管理中心 *Chen<br/>Released under the GPL V3.0 License</p>
       </div>
     </div>
+    <script>
+    function CheckPW() {
+        var data = new Array();
+        data['type'] = 'func';
+        data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/index/PassCheck';
+        data['data'] = '{"db_username" : "' + $("#db_username").val() + '", "db_password" : "' + $("#db_password").val() + '"}';
+        //console.log(data);
+        ws.send('{"type":"' + data['type'] + '","api":"' + data['api'] + '","data":' + data['data'] + '}');
+    }
+    </script>
 </body>
 </html>

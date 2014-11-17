@@ -83,6 +83,7 @@ class Index extends CI_Controller{
         
                 
         if ($this->index_model->dbLogin($this->input->post('db_username', TRUE), $this->input->post('db_password', TRUE))){
+            
             $this->session->set_userdata('db_username', $this->input->post('db_username', TRUE));
             $this->session->set_userdata('db_password', $this->input->post('db_password', TRUE));
             echo json_encode(array(
