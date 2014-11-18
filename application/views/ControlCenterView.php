@@ -32,8 +32,8 @@ var ws, ping, name = 'null', user_list={};
     
 
     // 当socket连接打开时，输入用户名
-    ws.onopen = function() {               
-        ws.send('{"type":"login","name":"DBA"}');
+    ws.onopen = function() {         
+        ws.send('{"type":"login","name":"DBA", "group":"desktop"}');
         setInterval("getping()",1000);
     };
 
@@ -126,7 +126,7 @@ function getping(){
                             <?php foreach ($db_list as $database => $table): ?>
                                 <div title="<?= $database?>">
                                     <?php foreach ($table as $table_name): ?>
-					<a href="javascript:void(0);" src="index.php?c=TableInfo&db=<?= $database?>&table=<?= $table_name?>" class="cs-navi-tab"><?= $table_name?></a></p>
+					<a href="javascript:void(0);"  src="index.php?c=TableInfo&db=<?= $database?>&t=<?= $table_name?>" class="cs-navi-tab"><?= $table_name?></a></p>
                                     <?php endforeach; ?>
 				</div>
                             <?php endforeach; ?>				
@@ -134,11 +134,8 @@ function getping(){
 	</div>
 	<div id="mainPanle" region="center" border="true" border="false">
             <div id="tabs" class="easyui-tabs"  fit="true" border="false" >
-                <div title="Home">
-                    <div class="cs-home-remark">
-                        <h1></h1><br/>
-                                   
-                    </div>
+                <div title="总览">
+                    <iframe src="<?= base_url('index.php/BasicDbInfo')?>" width="100%" height="100%" allowTransparency="true" frameBorder="0" scrolling="no">
                 </div>
             </div>
 	</div>

@@ -27,14 +27,11 @@ class ControlCenter extends CI_Controller{
             echo '<script>alert("'. $this->session->userdata('db_username') .'")</script>';
             echo '<script>window.location.href= \'' . base_url() . '\';</script>'; 
         }
-        $conn = $this->database->dbConnect();                
+        
+        $conn = $this->database->dbConnect();         
         $db_list = $this->database->getDbList($conn);
 //        var_dump($db_db_list);
-        
-        //获取Mysql基础信息
-        $db_info = $this->database->getDbInfo($conn);
-        
-        $this->load->view('ControlCenterView', array('db_list' => $db_list, 'db_info' => $db_info));
+        $this->load->view('ControlCenterView', array('db_list' => $db_list));
         
     }
 }

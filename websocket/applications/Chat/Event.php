@@ -127,20 +127,8 @@ class Event
         {
             // 用户登录 message格式: {type:login, name:xx} ，添加到用户，广播给所有用户xx进入聊天室
             case 'login':  
-                $url = $message_data['api'];
-                $data = $message_data['data'];
-                $message_data['key'] ? $key = $message_data['key'] : $key = null;
-                //对应result[0]
-                //$new_message[0] = 'iframe';
-                //将数据部分放入result[1]
-//                $new_message[1] = self::getApiData($url, $data, $key);     
-                $new_message = self::getApiData($url, $data, $key);
-                
-                //选择器索引放入result[2]
-//                $new_message[2] = $message_data['src'];
-                return Gateway::sendToUid($uid, WebSocket::encode($new_message));
-                return;
-                
+                self::addUserToList($uid, htmlspecialchars($message_data['name']), $message_data['group']);
+                break;
             // 用户发言 message: {type:say, to_uid:xx, content:xx}
             case 'say':
                 // 私聊
