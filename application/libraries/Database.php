@@ -115,6 +115,8 @@ class Database{
                 if ($cols = mysqli_fetch_fields($result)){
                     foreach ($cols as $col_item){
                         $data['cols'][$col_item->name]['type'] = $col_item->type;                        
+                        $data['cols'][$col_item->name]['length'] = $col_item->length;                        
+                        $data['cols'][$col_item->name]['charset'] = $col_item->charsetnr;                        
                     }
                 }
                 
@@ -126,7 +128,9 @@ class Database{
                 $time_point_b = microtime(true);
                 $data['time'] = number_format($time_point_b - $time_point_a, '8');
             } else {
-                $data['rows'] = 0;
+                $time_point_b = microtime(true);
+                $data['rows'] = 0;                
+                $data['time'] = number_format($time_point_b - $time_point_a, '8');
             }
         } else {
             if ($result = mysqli_query($conn, $sql)){
