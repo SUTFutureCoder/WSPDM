@@ -33,7 +33,7 @@
                         <tr>
                             <th></th>
                             <?php foreach ($data['cols'] as $col_name => $col_type):?>
-                            <th><?= $col_name ?></th>
+                            <th id="data_view_<?= $col_name?>"><?= $col_name ?></th>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
@@ -66,9 +66,9 @@
                     <tbody>                        
                     <?php $i = 0; ?>
                     <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                        <tr>
+                        <tr id="struct_view_col_<?=$col_name?>">
                             <td><?= ++$i ?></td>
-                            <td><a  id="dele_col_name_<?= $col_name?>" style="color:red">删除</a></td>
+                            <td><a onclick="dele_col_name('<?=$col_name?>')" style="color:red">删除</a></td>
                             <td><?= $col_name ?></td>
                             <td><?= $data['cols'][$col_name]['type']?></td>
                             <td><?= $data['cols'][$col_name]['length']?></td>
@@ -110,7 +110,7 @@
                         <tbody>                       
                         <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
                             <tr>
-                                <td><a onclick="sql_button(' <?= $col_name ?> ', 1)"><?= $col_name ?></a></td>
+                                <td onclick="sql_button(' <?= $col_name ?> ', 1)"><a id="sql_col_name_<?= $col_name?>"><?= $col_name ?></a></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -221,7 +221,42 @@
                         })
                         $("#sql_data_view").append("</tbody></table>");    
                         break;
+                        
+                    case 'DeleCol':
+                        var col_id = $("#struct_view_col_" + data[4]['col_name']).prevAll().length;
+                        $("#struct_view_col_" + data[4]['col_name']).remove();
+                        
+                        //从1开始计
+                        $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
+                        
+                        $("#insert_" + data[4]['col_name']).remove();
+                        
+                        $("#sql_col_name_" + data[4]['col_name']).remove();
+                        
+                        //开始广播
+                        
+                        var data = new Array();
+                        data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                        data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_DeleCol';
+                        data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>","col_name" : "' + col_name + '"}';
+                        parent.IframeSend(data);                      
+                        
+                        break;
+                        
+                    case 'B_DeleCol':
+                        if ($("#struct_view_col_" + data[4]['col_name']).length){
+                            var col_id = $("#struct_view_col_" + data[4]['col_name']).prevAll().length;
+                            $("#struct_view_col_" + data[4]['col_name']).remove();
+                            
+                            //从1开始计
+                            $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
+                            $("#insert_" + data[4]['col_name']).remove();
+                            $("#sql_col_name_" + data[4]['col_name']).remove();
+                        }
+                        break;
                     }
+                    
+                    
                 
             } else {
                 $("#alert").removeClass("alert-success");
@@ -254,6 +289,16 @@
             data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/ExecSQL';
             data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
             data['data'] += '"sql" : "' + $("#sql_area").val() + '", "database" : "<?= $data['database'] ?>"}';
+            parent.IframeSend(data);
+        }
+        
+        //删除字段
+        function dele_col_name(col_name){
+            var data = new Array();
+            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/DeleCol';
+            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
+            data['data'] += '"col_name" : "' + col_name + '", "database" : "<?= $data['database'] ?>", "table" : "<?= $data['table']?>"}';
             parent.IframeSend(data);
         }
         

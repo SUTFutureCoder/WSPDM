@@ -35,15 +35,20 @@ class TableInfo extends CI_Controller{
         $this->load->view('TableInfoView', array('data' => $data,
                             'user_key' => $this->secure->CreateUserKey($this->session->userdata('db_username'), $this->session->userdata('db_password')),
                             'user_name' => $this->session->userdata('db_username')));
-    }
-    
+    } 
+       
     /**    
      *  @Purpose:    
      *  执行SQL语句   
      *  @Method Name:
      *  getTableData()
      *  @Parameter: 
-     * 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST sql      SQL指令
+     *  
      *  @Return: 
      *  状态码|说明
      *      data
@@ -85,5 +90,87 @@ class TableInfo extends CI_Controller{
         
         $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'ExecSQL', $data);
                
+    }
+    
+    
+    
+    /**    
+     *  @Purpose:    
+     *  删除列   
+     *  @Method Name:
+     *  DeleCol()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST table    操作表
+     *  POST col_name   列名
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function DeleCol(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                $this->data->Out('iframe', $this->input->post('src', TRUE), -1, '密钥无法通过安检');
+            }
+        } else {
+            $this->data->Out('iframe', $this->input->post('src', TRUE), -2, '未检测到密钥');
+        }
+        
+        //连接数据库
+        $conn = $this->database->dbConnect($db['user_name'], $db['password']);
+        
+        //过滤数据库名
+        $database = mysqli_real_escape_string($conn, $this->input->post('database', TRUE));
+        $table = mysqli_real_escape_string($conn, $this->input->post('table', TRUE));
+        //过滤表名
+        $col_name = mysqli_real_escape_string($conn, $this->input->post('col_name', TRUE));
+
+        //连接数据库，非记录模式
+        $sql = 'USE ' . $database;
+        $this->database->execSQL($conn, $sql, 0);
+        
+        //执行SQL语句，为记录模式
+        //ALTER TABLE `activity` DROP `act_section`
+        $sql = 'ALTER TABLE ' . $table . ' DROP COLUMN ' . $col_name . ' ';
+        $data = $this->database->execSQL($conn, $sql, 1);
+        $data['col_name'] = $col_name;
+        
+        $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'DeleCol', $data);
+               
+    }
+    
+    /**    
+     *  @Purpose:    
+     *  删除列   
+     *  @Method Name:
+     *  DeleCol()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST table    操作表
+     *  POST col_name   列名
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function B_DeleCol(){
+        
     }
 }
