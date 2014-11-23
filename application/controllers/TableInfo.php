@@ -153,15 +153,13 @@ class TableInfo extends CI_Controller{
     
     /**    
      *  @Purpose:    
-     *  删除列   
+     *  广播删除列   
      *  @Method Name:
-     *  DeleCol()
+     *  B_DeleCol()
      *  @Parameter: 
      *  POST user_name 数据库用户名
      *  POST user_key 用户密钥
      *  POST src      目标地址
-     *  POST database 操作数据库
-     *  POST table    操作表
      *  POST col_name   列名
      * 
      *  @Return: 
@@ -171,6 +169,19 @@ class TableInfo extends CI_Controller{
      *  
     */ 
     public function B_DeleCol(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
         
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                return 0;
+            }
+        } else {
+            return 0;
+        }       
+        $this->data->Out('group', $this->input->post('src', TRUE), 1, 'B_DeleCol' ,  $this->input->post('col_name', TRUE));
     }
 }

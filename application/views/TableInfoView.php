@@ -12,7 +12,7 @@
         <div class="alert alert-danger" role="alert" id="alert">未操作</div>
         <?php else: ?>
         <div class="alert alert-success" role="alert" id="alert">
-            <p>正在显示第<?= $data['start'] ?>-<?= $data['end'] ?>(共操作<?= $data['rows'] ?>行，查询消耗<?= $data['time'] ?>秒)</p>
+            <p>正在显示第<?= $data['start'] ?>-<?= $data['end'] ?>(共操作<?= $data['rows'] ?>行，操作消耗<?= $data['time'] ?>秒)</p>
             <p><?= $data['sql']?></p>
         </div>
         <?php endif; ?>
@@ -109,8 +109,8 @@
                     <table class="table table-hover table-bordered" id="sql_table_list">                       
                         <tbody>                       
                         <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                            <tr>
-                                <td onclick="sql_button(' <?= $col_name ?> ', 1)"><a id="sql_col_name_<?= $col_name?>"><?= $col_name ?></a></td>
+                            <tr id="sql_col_name_<?= $col_name?>">
+                                <td onclick="sql_button(' <?= $col_name ?> ', 1)"><a><?= $col_name ?></a></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -126,12 +126,12 @@
                 <table class="table table-hover table-bordered" id="sql_table_list">                       
                     <tbody>                       
                     <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                        <tr>
+                        <tr id="insert_<?= $col_name?>">
                             <td><?= $col_name ?></td>
                             <td><?= $data['cols'][$col_name]['length'] ?></td>
                             <td><form role="form">
                                 <div class="form-group">
-                                  <input type="text" class="form-control" id="insert_<?= $col_name?>">
+                                  <input type="text" class="form-control">
                                 </div>
                                 </form>
                             </td>
@@ -152,7 +152,7 @@
                     </thead>
                     <tbody>                       
                     <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                        <tr>
+                        <tr id="search_col_<?= $col_name?>">
                             <td><?= $col_name ?></td>
                             <td><select class="form-control" name="">
                                     <option value="LIKE">LIKE</option>
@@ -174,7 +174,7 @@
                                 </select></td>
                             <td><form role="form">
                                 <div class="form-group">
-                                  <input type="text" class="form-control" id="insert_<?= $col_name?>">
+                                  <input type="text" class="form-control">
                                 </div>
                                 </form>
                             </td>
@@ -194,67 +194,78 @@
         //接收母窗口传来的值
         function MotherResultRec(data) {
             if (1 == data[2]) {
-                $("form").each(function () {
-                    this.reset();
-                });                
-                $("#alert").removeClass("alert-danger");
-                $("#alert").addClass("alert-success");
-                $("#alert").html("<p>共操作" + data[4]['rows'] + "行，查询消耗" + data[4]['time'] + "秒<p>" + "<p>" + data[4]['sql'] + "<p>");
-                switch (data[3]){
-                    case 'ExecSQL':
-                        $("#sql_result").html("");
-                        $("#sql_result").append("<br/><table class=\"table table-hover table-bordered\" id=\"sql_data_view\">");
-                        $("#sql_data_view").append("<thead><tr><th>#</th>");
-                        //取出字段
-                        $.each(data[4]['cols'], function (col_name){
-                            $("#sql_data_view thead tr").append("<th>" + col_name + "</th>");
-                        });
-                        $("#sql_data_view").append("</thead><tbody>");                        
-                        //取出数据
-                        $.each(data[4]['data'], function (i, data_item){
-//                            console.log(data_item);
-                            $("#sql_data_view tbody").append("<tr id=" + i + "><td>" + i + "</td></tr>");
-                            $.each(data_item, function (m, data_item_val){
-//                                console.log(data_item_val);
-                                $("#sql_data_view tbody #" + i).append("<td>" + data_item_val + "</td>");
-                            })   
-                        })
-                        $("#sql_data_view").append("</tbody></table>");    
-                        break;
-                        
-                    case 'DeleCol':
-                        var col_id = $("#struct_view_col_" + data[4]['col_name']).prevAll().length;
-                        $("#struct_view_col_" + data[4]['col_name']).remove();
-                        
-                        //从1开始计
-                        $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
-                        
-                        $("#insert_" + data[4]['col_name']).remove();
-                        
-                        $("#sql_col_name_" + data[4]['col_name']).remove();
-                        
-                        //开始广播
-                        
-                        var data = new Array();
-                        data['src'] = location.href.slice((location.href.lastIndexOf("/")));
-                        data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_DeleCol';
-                        data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>","col_name" : "' + col_name + '"}';
-                        parent.IframeSend(data);                      
-                        
-                        break;
-                        
-                    case 'B_DeleCol':
-                        if ($("#struct_view_col_" + data[4]['col_name']).length){
+                if ('group' != data[0]){
+                    $("form").each(function () {
+                        this.reset();
+                    });                
+                    $("#alert").removeClass("alert-danger");
+                    $("#alert").addClass("alert-success");
+                    $("#alert").html("<p>共操作" + data[4]['rows'] + "行，操作消耗" + data[4]['time'] + "秒<p>" + "<p>" + data[4]['sql'] + "<p>");
+                    switch (data[3]){
+                        case 'ExecSQL':
+                            $("#sql_result").html("");
+                            $("#sql_result").append("<br/><table class=\"table table-hover table-bordered\" id=\"sql_data_view\">");
+                            $("#sql_data_view").append("<thead><tr><th>#</th>");
+                            //取出字段
+                            $.each(data[4]['cols'], function (col_name){
+                                $("#sql_data_view thead tr").append("<th>" + col_name + "</th>");
+                            });
+                            $("#sql_data_view").append("</thead><tbody>");                        
+                            //取出数据
+                            $.each(data[4]['data'], function (i, data_item){
+    //                            console.log(data_item);
+                                $("#sql_data_view tbody").append("<tr id=" + i + "><td>" + i + "</td></tr>");
+                                $.each(data_item, function (m, data_item_val){
+    //                                console.log(data_item_val);
+                                    $("#sql_data_view tbody #" + i).append("<td>" + data_item_val + "</td>");
+                                })   
+                            })
+                            $("#sql_data_view").append("</tbody></table>");    
+                            break;
+
+                        case 'DeleCol':
                             var col_id = $("#struct_view_col_" + data[4]['col_name']).prevAll().length;
-                            $("#struct_view_col_" + data[4]['col_name']).remove();
-                            
+                            var col_name = data[4]['col_name'];
+                            $("#struct_view_col_" + col_name).remove();
+
                             //从1开始计
                             $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
-                            $("#insert_" + data[4]['col_name']).remove();
-                            $("#sql_col_name_" + data[4]['col_name']).remove();
+
+                            $("#insert_" + col_name).remove();
+
+                            $("#sql_col_name_" + col_name).remove();
+
+                            $("#search_col_" + col_name).remove();
+                            //开始广播
+
+                            var data = new Array();
+                            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                            data['group'] = 'desktop';
+                            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_DeleCol';
+                            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "col_name" : "' + col_name + '"}';
+                            parent.IframeSend(data, 'group');                      
+
+                            break;
+
                         }
-                        break;
+                } else {
+                //广播接收
+                    switch (data[3]){                        
+                        case 'B_DeleCol':
+                            if ($("#struct_view_col_" + data[4]).length){
+                                var col_id = $("#struct_view_col_" + data[4]).prevAll().length;
+                                $("#struct_view_col_" + data[4]).remove();
+
+                                //从1开始计
+                                $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
+                                $("#insert_" + data[4]).remove();
+                                $("#sql_col_name_" + data[4]).remove();
+                                 $("#search_col_" + data[4]).remove();
+                            }
+                            break;
                     }
+                }
+                
                     
                     
                 
