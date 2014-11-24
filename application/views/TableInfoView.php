@@ -123,23 +123,31 @@
                 </div>
             </div>
             <div role="tabpanel" class="tab-pane" id="insert">                
-                <table class="table table-hover table-bordered" id="sql_table_list">                       
-                    <tbody>                       
-                    <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                        <tr id="insert_<?= $col_name?>">
+                <table class="table table-hover table-bordered" >                       
+                    <tbody>  
+                        <form role="form" id="insert_list">
+                    <?php foreach ($data['cols'] as $col_name => $col_type): ?> 
+                            <tr id="insert_<?= $col_name ?>">
                             <td><?= $col_name ?></td>
                             <td><?= $data['cols'][$col_name]['length'] ?></td>
-                            <td><form role="form">
+                            <td>
                                 <div class="form-group">
-                                  <input type="text" class="form-control">
+                        <?php if (1 == $data['cols'][$col_name]['type']): ?>
+                            <input type="checkbox" name="<?= $col_name ?>" class="form-control cbx" id="insert_<?= $col_name ?>_val">
+                        <?php elseif (253 == $data['cols'][$col_name]['type']): ?>
+                            <textarea class="form-control" name="<?= $col_name ?>" rows="3" id="insert_<?= $col_name ?>_val"></textarea>
+                        <?php else: ?>
+                            <input type="text" class="form-control" name="<?= $col_name ?>" id="insert_<?= $col_name ?>_val">
+                        <?php endif; ?>
                                 </div>
-                                </form>
+                                
                             </td>
                         </tr>
                     <?php endforeach; ?>
+                        </form>
                     </tbody>
                 </table>
-                <button type="button" class="btn btn-primary btn-lg btn-block">插入</button>
+                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="insert()">插入</button>
             </div>
             <div role="tabpanel" class="tab-pane" id="search">
                 <table class="table table-hover table-bordered" id="sql_table_list"> 
@@ -160,9 +168,6 @@
                                     <option value="NOT LIKE">NOT LIKE</option>
                                     <option value="=">=</option>
                                     <option value="!=">!=</option>
-                                    <option value="REGEXP">REGEXP</option>
-                                    <option value="REGEXP ^...$">REGEXP ^...$</option>
-                                    <option value="NOT REGEXP">NOT REGEXP</option>
                                     <option value="= ''">= ''</option>
                                     <option value="!= ''">!= ''</option>
                                     <option value="IN (...)">IN (...)</option>
@@ -195,9 +200,6 @@
         function MotherResultRec(data) {
             if (1 == data[2]) {
                 if ('group' != data[0]){
-                    $("form").each(function () {
-                        this.reset();
-                    });                
                     $("#alert").removeClass("alert-danger");
                     $("#alert").addClass("alert-success");
                     $("#alert").html("<p>共操作" + data[4]['rows'] + "行，操作消耗" + data[4]['time'] + "秒<p>" + "<p>" + data[4]['sql'] + "<p>");
@@ -229,7 +231,7 @@
                             $("#struct_view_col_" + col_name).remove();
 
                             //从1开始计
-                            $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
+                            $("#data_view tr td:nth-of-type(" + (2 + col_id) + ")").remove();
 
                             $("#insert_" + col_name).remove();
 
@@ -246,8 +248,25 @@
                             parent.IframeSend(data, 'group');                      
 
                             break;
-
-                        }
+                            
+                        case 'InsertData':
+                            $("#data_view tbody").append("<tr><td><a>编辑</a><a>|</a><a style=\"color:red\">删除</a></td></tr>");
+                            
+                            td_num = $("#data_view thead tr th").length - 1;
+                            
+                            for (i = 0; i < td_num; i++){
+                                $("#data_view tbody tr:last-child").append("<td></td>");
+                            }
+                            $.each(data[4]['data'][0], function(col_name, value){
+                                col_num = $("#data_view_" + col_name).prevAll().length;
+                                $("#data_view tbody tr:last-child td:nth-of-type(" + (1 + col_num) + ")").html(value);
+                            });                 
+                            break;
+                    }
+                    //重置表单
+                    $("form").each(function () {
+                        this.reset();
+                    });              
                 } else {
                 //广播接收
                     switch (data[3]){                        
@@ -257,17 +276,14 @@
                                 $("#struct_view_col_" + data[4]).remove();
 
                                 //从1开始计
-                                $("#data_view tr :nth-child(" + (2 + col_id) + ")").remove();
+                                $("#data_view tr td:nth-of-type(" + (2 + col_id) + ")").remove();
                                 $("#insert_" + data[4]).remove();
                                 $("#sql_col_name_" + data[4]).remove();
                                  $("#search_col_" + data[4]).remove();
                             }
-                            break;
+                            break;                         
                     }
                 }
-                
-                    
-                    
                 
             } else {
                 $("#alert").removeClass("alert-success");
@@ -311,6 +327,25 @@
             data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
             data['data'] += '"col_name" : "' + col_name + '", "database" : "<?= $data['database'] ?>", "table" : "<?= $data['table']?>"}';
             parent.IframeSend(data);
+        }
+        
+        //添加数据
+        function insert(){
+            //序列化表单
+            var values = $("#insert_list").serializeArray();
+            var data = new Array();
+            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+            data['group'] = 'desktop';
+            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/InsertData';
+            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "database" : "<?= $data['database'] ?>", "table" : "<?= $data['table'] ?>", "data" : {';
+            $.each(values, function(i, field){
+                if (0 != i){
+                    data['data'] += ', ';
+                }
+                data['data'] += '"' + field.name + '":"' + field.value + '"';
+            })
+            data['data'] += '}}';
+            parent.IframeSend(data, 'group');
         }
         
     </script>

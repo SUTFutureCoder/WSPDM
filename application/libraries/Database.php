@@ -104,7 +104,7 @@ class Database{
      *  $data['data'] 取出数据
      * 
     */
-    public function execSQL($conn, $sql, $record = 1){
+    public function execSQL($conn, $sql, $record = 1, $result_data = 0){
         error_reporting(0);
         if ($record){
             $data = array();
@@ -134,6 +134,12 @@ class Database{
             }
         } else {
             if ($result = mysqli_query($conn, $sql)){
+                if ($result_data){
+                    while ($obj = mysqli_fetch_array($result, MYSQL_ASSOC)){
+                        $data[] = $obj;
+                    }
+                    return $data;
+                }                
                 return 1;
             } else {
                 return 0;

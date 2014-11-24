@@ -41,7 +41,7 @@ class TableInfo extends CI_Controller{
      *  @Purpose:    
      *  执行SQL语句   
      *  @Method Name:
-     *  getTableData()
+     *  ExecSQL()
      *  @Parameter: 
      *  POST user_name 数据库用户名
      *  POST user_key 用户密钥
@@ -89,6 +89,96 @@ class TableInfo extends CI_Controller{
         $data = $this->database->execSQL($conn, $sql, 1);
         
         $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'ExecSQL', $data);
+               
+    }
+    
+       
+    /**    
+     *  @Purpose:    
+     *  插入行   
+     *  @Method Name:
+     *  InsertData()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST table      表名
+     *  POST array data 插入数据（key => value）
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function InsertData(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                $this->data->Out('iframe', $this->input->post('src', TRUE), -1, '密钥无法通过安检');
+            }
+        } else {
+            $this->data->Out('iframe', $this->input->post('src', TRUE), -2, '未检测到密钥');
+        }        
+        
+        //连接数据库
+        $conn = $this->database->dbConnect($db['user_name'], $db['password']);
+        
+        //过滤数据库名
+        $database = mysqli_real_escape_string($conn, $this->input->post('database', TRUE));
+        
+        //过滤表名
+        $table = mysqli_real_escape_string($conn, $this->input->post('table', TRUE));
+        
+        //连接数据库，非记录模式
+        $sql = 'USE ' . $database;
+        $this->database->execSQL($conn, $sql, 0);
+        
+        //取出post进的数据
+        $post_data = $this->input->post('data', TRUE);
+        
+        $sql = "INSERT INTO $table (";
+        $sql_value = 'VALUES (';        
+        $sql_result = "SELECT * FROM $table WHERE ";
+        $i = 0;
+        $r = 0;
+        foreach ($post_data as $key => $value){
+            if ($i){
+                $sql .= ', ';
+                $sql_value .= ', ';
+            }
+            
+            $sql .= "$key";
+            if ('on' == $value){
+                $value = 1;
+            }
+            $sql_value .= "'$value'";
+            
+            if ($value){   
+                if ($r){
+                    $sql_result .= ' AND ';
+                }
+                $sql_result .= " $key = '$value' ";
+                ++$r;
+            }
+            ++$i;
+        }
+        
+        $sql .= ") " . $sql_value . '); ';
+        
+        $sql_result .= ' LIMIT 1';
+        //执行SQL语句，为记录模式
+        $data = $this->database->execSQL($conn, $sql, 1);   
+        
+        $data['data'] = $this->database->execSQL($conn, $sql_result, 0, 1);
+//        $data['data'] = $sql_result;
+        
+        $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'InsertData', $data);
                
     }
     
