@@ -150,7 +150,7 @@
                 <button type="button" class="btn btn-primary btn-lg btn-block" onclick="insert()">插入</button>
             </div>
             <div role="tabpanel" class="tab-pane" id="search">
-                <table class="table table-hover table-bordered" id="sql_table_list"> 
+                <table class="table table-hover table-bordered" id="search_panel"> 
                     <thead>
                         <tr>
                             <td>字段</td>
@@ -160,9 +160,9 @@
                     </thead>
                     <tbody>                       
                     <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
-                        <tr id="search_col_<?= $col_name?>">
+                        <tr id="search_col_<?= $col_name ?>">
                             <td><?= $col_name ?></td>
-                            <td><select class="form-control" name="">
+                            <td><select class="form-control search-form-select">
                                     <option value="LIKE">LIKE</option>
                                     <option value="LIKE %...%">LIKE %...%</option>
                                     <option value="NOT LIKE">NOT LIKE</option>
@@ -179,7 +179,7 @@
                                 </select></td>
                             <td><form role="form">
                                 <div class="form-group">
-                                  <input type="text" class="form-control">
+                                  <input type="text" id="search_value_<?= $col_name ?>" class="form-control search-form-val">
                                 </div>
                                 </form>
                             </td>
@@ -187,7 +187,7 @@
                     <?php endforeach; ?>
                     </tbody>
                 </table>
-                <button type="button" class="btn btn-primary btn-lg btn-block">搜索</button>
+                <button type="button" onclick="search()" class="btn btn-primary btn-lg btn-block">搜索</button>
             </div>
             <div role="tabpanel" class="tab-pane" id="operating"></div>
         </div>
@@ -346,6 +346,50 @@
             })
             data['data'] += '}}';
             parent.IframeSend(data, 'group');
+        }
+        
+        //搜索
+        function search(){
+            $select = new Array;
+            $i = 0;
+            $(".search-form-select").each(function(){
+                $select[$i] = $(this).val();
+                $i++;
+            });
+            
+            $form_data = new Array;
+            $i = 0;
+            $n = 0;
+            $(".search-form-val").each(function(){
+                if ($(this).val()){
+                    $form_data[$i] = new Array;
+                    $form_data[$i]['select'] = $select[$n];
+                    $form_data[$i]['val'] = $(this).val();
+                    $i++;
+                }
+                $n++;
+            })
+            
+            var data = new Array();
+            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/SearchData';
+            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "database" : "<?= $data['database'] ?>", "table" : "<?= $data['table'] ?>", "data" : {';            
+            
+            $form_data = new Array;
+            $i = 0;
+            $n = 0;
+            $(".search-form-val").each(function(){
+                if ($(this).val()){
+                    if (0 != $i){
+                        data['data'] += ', ';                        
+                    }
+                    data['data'] += '"' + $select[$n] + '":"' + $(this).val() + '"';
+                    $i++;
+                }
+                $n++;
+            })                     
+            data['data'] += '}}';
+            parent.IframeSend(data);
         }
         
     </script>
