@@ -63,7 +63,7 @@ var ws, ping, name = 'null', user_list={};
                 
         case "iframe":
         case "group":     
-            //当src为index.php/a 的情况
+            //当src为index.php/a 的情况location.href.slice(0, location.href.lastIndexOf("/"))
             if ($("iframe[src='" + location.href.slice(0, location.href.lastIndexOf("/")) + result[1] + "']")[0]){
                 $("iframe[src='" + location.href.slice(0, location.href.lastIndexOf("/")) + result[1] + "']")[0].contentWindow.MotherResultRec(result);
             } else {
@@ -112,6 +112,13 @@ function getping(){
 //alert(JSON.stringify({"type":"ping"}));
     ws.send('{"type":"ping"}');
 }    
+
+function CleanTable(database, table_name){
+//    alert();
+    $("a[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + table_name + "\"]").remove();
+    $(".tabs-selected").remove();
+    $("iframe[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + table_name + "\"]").remove();
+}
 </script>
 <body class="easyui-layout">
 

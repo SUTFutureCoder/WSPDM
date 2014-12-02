@@ -116,8 +116,7 @@
                         </tbody>
                     </table>
                 </div>
-                <br/>
-                <br/>
+                <hr>
                 <div id="sql_result">
                     
                 </div>
@@ -161,7 +160,7 @@
                     <tbody>                       
                     <?php foreach ($data['cols'] as $col_name => $col_type): ?>                    
                         <tr id="search_col_<?= $col_name ?>">
-                            <td><?= $col_name ?></td>
+                            <td class="search_col_name"><?= $col_name ?></td>
                             <td><select class="form-control search-form-select">
                                     <option value="LIKE">LIKE</option>
                                     <option value="LIKE %...%">LIKE %...%</option>
@@ -188,10 +187,24 @@
                     </tbody>
                 </table>
                 <button type="button" onclick="search()" class="btn btn-primary btn-lg btn-block">搜索</button>
+                <hr>
+                <div id="search_result">
+                    
+                </div>
             </div>
-            <div role="tabpanel" class="tab-pane" id="operating"></div>
+            <div role="tabpanel" class="tab-pane" id="operating">                
+                <br/>
+                <div class="panel panel-danger">
+                    <div class="panel-heading">危险地带</div>
+                    <div class="panel-body">
+                        <button type="button" class="btn btn-warning" col-sm-offset-5"  onclick="dele_table()">清除表</button>
+                        <button type="button" class="btn btn-danger col-sm-offset-11"  onclick="dele_table()">删除表</button>
+                    </div>
+                </div>  
+                
+            </div>
         </div>
-        
+ 
         
     </body>
     <script>
@@ -262,6 +275,37 @@
                                 $("#data_view tbody tr:last-child td:nth-of-type(" + (1 + col_num) + ")").html(value);
                             });                 
                             break;
+                            
+                        case 'SearchData':
+                            $("#search_result").html("");
+                            $("#search_result").append("<br/><table class=\"table table-hover table-bordered\" id=\"search_data_view\">");
+                            $("#search_data_view").append("<thead><tr><th>#</th>");
+                            //取出字段
+                            $.each(data[4]['cols'], function (col_name){
+                                $("#search_data_view thead tr").append("<th>" + col_name + "</th>");
+                            });
+                            $("#search_data_view").append("</thead><tbody>");                        
+                            //取出数据
+                            $.each(data[4]['data'], function (i, data_item){
+    //                            console.log(data_item);
+                                $("#search_data_view tbody").append("<tr id=" + i + "><td>" + i + "</td></tr>");
+                                $.each(data_item, function (m, data_item_val){
+    //                                console.log(data_item_val);
+                                    $("#search_data_view tbody #" + i).append("<td>" + data_item_val + "</td>");
+                                })   
+                            })
+                            $("#search_data_view").append("</tbody></table>");    
+                            break;
+                            
+                        case 'DeleTable':
+                            alert('删除成功');
+                            var data = new Array();
+                            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                            data['group'] = 'desktop';
+                            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_DeleTable';
+                            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "table" : "<?= $data['table'] ?>", "database" : "<?= $data['database'] ?>"}';
+                            parent.IframeSend(data, 'group');    
+                            break;
                     }
                     //重置表单
                     $("form").each(function () {
@@ -281,7 +325,11 @@
                                 $("#sql_col_name_" + data[4]).remove();
                                  $("#search_col_" + data[4]).remove();
                             }
-                            break;                         
+                            break;        
+                            
+                        case 'B_DeleTable':
+                            parent.CleanTable(data[4]['database'], data[4]['table']);
+                            break;
                     }
                 }
                 
@@ -350,47 +398,56 @@
         
         //搜索
         function search(){
-            $select = new Array;
-            $i = 0;
-            $(".search-form-select").each(function(){
-                $select[$i] = $(this).val();
-                $i++;
+            select = new Array;
+            
+            i = 0;
+            col_name = new Array;
+            $(".search_col_name").each(function(){
+                col_name[i] = $(this).html();
+                i++;
             });
             
-            $form_data = new Array;
-            $i = 0;
-            $n = 0;
-            $(".search-form-val").each(function(){
-                if ($(this).val()){
-                    $form_data[$i] = new Array;
-                    $form_data[$i]['select'] = $select[$n];
-                    $form_data[$i]['val'] = $(this).val();
-                    $i++;
-                }
-                $n++;
-            })
+            i = 0;
+            $(".search-form-select").each(function(){
+                select[i] = $(this).val();
+                i++;
+            });
+                       
             
+            form_data = new Array;
+                        
             var data = new Array();
             data['src'] = location.href.slice((location.href.lastIndexOf("/")));
             data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/SearchData';
             data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "database" : "<?= $data['database'] ?>", "table" : "<?= $data['table'] ?>", "data" : {';            
             
-            $form_data = new Array;
-            $i = 0;
-            $n = 0;
+            i = 0;
+            n = 0;
             $(".search-form-val").each(function(){
-                if ($(this).val()){
-                    if (0 != $i){
+                if ($(this).val() != '' || select[n] == "= ''" || select[n] == "!= ''" || select[n] ==  "IS NULL" || select[n] ==  "IS NOT NULL"){
+                    if (0 != i){
                         data['data'] += ', ';                        
                     }
-                    data['data'] += '"' + $select[$n] + '":"' + $(this).val() + '"';
-                    $i++;
+                    data['data'] += '"' + i + '" : {"col":"' + col_name[n] + '", "cmd":"' + select[n] + '", "val":"' + $(this).val() + '"}';
+                    i++;
                 }
-                $n++;
+                n++;
             })                     
             data['data'] += '}}';
             parent.IframeSend(data);
+            
+            col_name = form_data = select =  null;
         }
+        
+        function dele_table(){
+            var data = new Array();
+            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/DeleTable';
+            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
+            data['data'] += '"table" : "<?= $data['table'] ?>", "database" : "<?= $data['database'] ?>"}';
+            parent.IframeSend(data);
+        }
+        
         
     </script>
 </html>
