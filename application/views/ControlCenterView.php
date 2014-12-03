@@ -113,11 +113,22 @@ function getping(){
     ws.send('{"type":"ping"}');
 }    
 
-function CleanTable(database, table_name){
+function DeleTable(database, table_name){
 //    alert();
     $("a[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + table_name + "\"]").remove();
     $(".tabs-selected").remove();
     $("iframe[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + table_name + "\"]").remove();
+}
+
+function UpdateTableName(database, old_table_name, new_table_name){
+//    alert();
+//alert("a[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + old_table_name + "\"]");
+    $("a[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + old_table_name + "\"]").html(new_table_name);
+    $("a[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + old_table_name + "\"]").attr("src", location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + new_table_name);
+    $(".tabs-selected span.tabs-closable").html(new_table_name);
+    $("iframe[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + old_table_name + "\"]").attr("src", location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + new_table_name);
+    //强制刷新
+    $("iframe[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + new_table_name + "\"]").attr("src", $("iframe[src=\"" + location.href.slice(0, location.href.lastIndexOf("/")) + "?c=TableInfo&db=" + database + "&t=" + new_table_name + "\"]").attr('src'));
 }
 </script>
 <body class="easyui-layout">

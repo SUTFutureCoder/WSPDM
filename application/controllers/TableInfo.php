@@ -431,6 +431,118 @@ class TableInfo extends CI_Controller{
     
     /**    
      *  @Purpose:    
+     *  清除表   
+     *  @Method Name:
+     *  TruncateTable()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST table    操作表
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function TruncateTable(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                $this->data->Out('iframe', $this->input->post('src', TRUE), -1, '密钥无法通过安检');
+            }
+        } else {
+            $this->data->Out('iframe', $this->input->post('src', TRUE), -2, '未检测到密钥');
+        }
+        
+        //连接数据库
+        $conn = $this->database->dbConnect($db['user_name'], $db['password']);
+        
+        //过滤数据库名
+        $database = mysqli_real_escape_string($conn, $this->input->post('database', TRUE));
+        $table = mysqli_real_escape_string($conn, $this->input->post('table', TRUE));
+
+        //连接数据库，非记录模式
+        $sql = 'USE ' . $database;
+        $this->database->execSQL($conn, $sql, 0);
+        
+        //执行SQL语句，为记录模式
+        //ALTER TABLE `activity` DROP `act_section`
+        $sql = 'TRUNCATE ' . $table . ' ';
+        $data = $this->database->execSQL($conn, $sql, 1);
+        $data['table'] = $table;
+        $data['database'] = $database;
+        
+        $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'TruncateTable', $data);
+               
+    }
+    
+    /**    
+     *  @Purpose:    
+     *  修改表名   
+     *  @Method Name:
+     *  RenameTable()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 操作数据库
+     *  POST old_table_name    操作表(旧表名)
+     *  POST new_table_name    新表名
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function RenameTable(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                $this->data->Out('iframe', $this->input->post('src', TRUE), -1, '密钥无法通过安检');
+            }
+        } else {
+            $this->data->Out('iframe', $this->input->post('src', TRUE), -2, '未检测到密钥');
+        }
+        
+        //连接数据库
+        $conn = $this->database->dbConnect($db['user_name'], $db['password']);
+        
+        //过滤数据库名
+        $database = mysqli_real_escape_string($conn, $this->input->post('database', TRUE));
+        $old_table_name = mysqli_real_escape_string($conn, $this->input->post('old_table_name', TRUE));
+        $new_table_name = mysqli_real_escape_string($conn, $this->input->post('new_table_name', TRUE));
+
+        //连接数据库，非记录模式
+        $sql = 'USE ' . $database;
+        $this->database->execSQL($conn, $sql, 0);
+        
+        //执行SQL语句，为记录模式
+        //ALTER TABLE `activity` DROP `act_section`
+        $sql = "RENAME TABLE $database.$old_table_name TO $database.$new_table_name";
+        $data = $this->database->execSQL($conn, $sql, 1);
+        $data['old_table_name'] = $old_table_name;
+        $data['new_table_name'] = $new_table_name;
+        
+        $this->data->Out('iframe', $this->input->post('src', TRUE), 1, 'RenameTable', $data);
+               
+    }
+    
+    /**    
+     *  @Purpose:    
      *  广播删除列   
      *  @Method Name:
      *  B_DeleCol()
@@ -498,6 +610,84 @@ class TableInfo extends CI_Controller{
         
         $data['database'] = $this->input->post('database', TRUE);
         $data['table'] = $this->input->post('table', TRUE);
-        $this->data->Out('group', $this->input->post('src', TRUE), 1, 'B_DeleTable' ,  $data);
+        $this->data->Out('group', $this->input->post('src', TRUE), 1, 'B_DeleTable', $data);
+    }
+    
+    /**    
+     *  @Purpose:    
+     *  广播清除表   
+     *  @Method Name:
+     *  B_TruncateTable()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 数据库名
+     *  POST table 表
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function B_TruncateTable(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                return 0;
+            }
+        } else {
+            return 0;
+        }       
+        
+        $data['database'] = $this->input->post('database', TRUE);
+        $data['table'] = $this->input->post('table', TRUE);
+        $this->data->Out('group', $this->input->post('src', TRUE), 1, 'B_TruncateTable', $data);
+    }
+    
+    /**    
+     *  @Purpose:    
+     *  广播重命名表   
+     *  @Method Name:
+     *  B_RenameTable()
+     *  @Parameter: 
+     *  POST user_name 数据库用户名
+     *  POST user_key 用户密钥
+     *  POST src      目标地址
+     *  POST database 数据库名
+     *  POST old_table_name 旧表名
+     *  POST new_table_name 新表名
+     * 
+     *  @Return: 
+     *  状态码|说明
+     *      data
+     * 
+     *  
+    */ 
+    public function B_RenameTable(){
+        $this->load->library('secure');
+        $this->load->library('database');
+        $this->load->library('data');
+        
+        $db = array();
+        if ($this->input->post('user_name', TRUE) && $this->input->post('user_key', TRUE)){
+            $db = $this->secure->CheckUserKey($this->input->post('user_key', TRUE));
+            if ($this->input->post('user_name', TRUE) != $db['user_name']){
+                return 0;
+            }
+        } else {
+            return 0;
+        }       
+        
+        $data['database'] = $this->input->post('database', TRUE);
+        $data['new_table_name'] = $this->input->post('new_table_name', TRUE);
+        $data['old_table_name'] = $this->input->post('old_table_name', TRUE);
+        $this->data->Out('group', $this->input->post('src', TRUE), 1, 'B_RenameTable', $data);
     }
 }

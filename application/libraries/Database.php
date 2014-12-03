@@ -9,7 +9,7 @@ if (!defined('BASEPATH'))
  *
  * @copyright  版权所有(C) 2014-2014 沈阳工业大学ACM实验室 沈阳工业大学网络管理中心 *Chen
  * @license    http://www.gnu.org/licenses/gpl-3.0.txt   GPL3.0 License
- * @version    2.0
+ * @version    1.0
  * @link       http://acm.sut.edu.cn/
  * @since      File available since Release 2.0
 */
@@ -120,7 +120,11 @@ class Database{
                     }
                 }
                 
-                $data['rows'] = mysqli_affected_rows($conn);
+                if ('SELECT' != substr(trim($sql), 0, 6)){
+                    $data['rows'] = mysqli_affected_rows($conn);
+                } else {
+                    $data['rows'] = mysqli_num_rows($result);
+                }
                 
                 while ($obj = mysqli_fetch_array($result, MYSQL_ASSOC)){                                  
                     $data['data'][] = $obj;
@@ -128,8 +132,12 @@ class Database{
                 $time_point_b = microtime(true);
                 $data['time'] = number_format($time_point_b - $time_point_a, '8');
             } else {
+                if ('SELECT' != substr(trim($sql), 0, 6)){
+                    $data['rows'] = mysqli_affected_rows($conn);
+                } else {
+                    $data['rows'] = mysqli_num_rows($result);
+                }
                 $time_point_b = microtime(true);
-                $data['rows'] = 0;                
                 $data['time'] = number_format($time_point_b - $time_point_a, '8');
             }
         } else {

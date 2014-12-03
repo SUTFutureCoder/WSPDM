@@ -31,16 +31,17 @@
                 <table class="table table-hover table-bordered" id="data_view">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th>#</th>
                             <?php foreach ($data['cols'] as $col_name => $col_type):?>
                             <th id="data_view_<?= $col_name?>"><?= $col_name ?></th>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
                     <tbody>
+                        
                     <?php foreach($data['data'] as $key => $value): ?>                    
                         <tr>
-                            <td><a>编辑</a><a>|</a><a style="color:red">删除</a></td>
+                            <td class="col-sm-1"><?= $key ?></td>
                             <?php foreach($value as $table_name => $table_value): ?>   
                                 <td><?=$table_value?></td>
                             <?php endforeach; ?>
@@ -194,17 +195,27 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="operating">                
                 <br/>
+                <div class="panel panel-warning">
+                    <div class="panel-heading">修改表名</div>
+                    <div class="panel-body">
+                        <form role="form">
+                            <div class="form-group">
+                              <input type="text" id="new_table_name" class="form-control">
+                            </div>                            
+                        </form>
+                        <button type="button" class="btn btn-info"  onclick="rename_table()">修改表名</button>
+                    </div>
+                </div>
                 <div class="panel panel-danger">
                     <div class="panel-heading">危险地带</div>
                     <div class="panel-body">
-                        <button type="button" class="btn btn-warning" col-sm-offset-5"  onclick="dele_table()">清除表</button>
+                        <button type="button" class="btn btn-warning col-sm-offset-5"  onclick="truncate_table()">清除表</button>
                         <button type="button" class="btn btn-danger col-sm-offset-11"  onclick="dele_table()">删除表</button>
                     </div>
                 </div>  
                 
             </div>
         </div>
- 
         
     </body>
     <script>
@@ -263,7 +274,14 @@
                             break;
                             
                         case 'InsertData':
-                            $("#data_view tbody").append("<tr><td><a>编辑</a><a>|</a><a style=\"color:red\">删除</a></td></tr>");
+                            
+                            if ($("#data_view tbody tr").length){
+                                last_id = $("#data_view tbody tr:last-child td:nth-of-type(" + (1) + ")").html();
+                            } else {
+                                last_id = 0;
+                            }
+                            
+                            $("#data_view tbody").append("<tr><td>" + (++last_id) + "</td></tr>");
                             
                             td_num = $("#data_view thead tr th").length - 1;
                             
@@ -306,6 +324,26 @@
                             data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "table" : "<?= $data['table'] ?>", "database" : "<?= $data['database'] ?>"}';
                             parent.IframeSend(data, 'group');    
                             break;
+                            
+                        case 'TruncateTable':
+                            alert('清除成功');
+                            var data = new Array();
+                            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                            data['group'] = 'desktop';
+                            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_TruncateTable';
+                            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "table" : "<?= $data['table'] ?>", "database" : "<?= $data['database'] ?>"}';
+                            parent.IframeSend(data, 'group');    
+                            break;
+                            
+                        case 'RenameTable':
+                            alert('修改成功');
+                            var data_rename = new Array();
+                            data_rename['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                            data_rename['group'] = 'desktop';
+                            data_rename['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/B_RenameTable';
+                            data_rename['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>", "database" : "<?= $data['database'] ?>", "old_table_name" : "' + data[4]['old_table_name'] + '", "new_table_name" : "' + data[4]['new_table_name'] + '"}';
+                            parent.IframeSend(data_rename, 'group');    
+                            break;
                     }
                     //重置表单
                     $("form").each(function () {
@@ -323,12 +361,20 @@
                                 $("#data_view tr td:nth-of-type(" + (2 + col_id) + ")").remove();
                                 $("#insert_" + data[4]).remove();
                                 $("#sql_col_name_" + data[4]).remove();
-                                 $("#search_col_" + data[4]).remove();
+                                $("#search_col_" + data[4]).remove();
                             }
                             break;        
                             
                         case 'B_DeleTable':
-                            parent.CleanTable(data[4]['database'], data[4]['table']);
+                            parent.DeleTable(data[4]['database'], data[4]['table']);
+                            break;
+                        
+                        case 'B_TruncateTable':
+                            $("#data_view tbody").empty();
+                            break;
+                            
+                        case 'B_RenameTable':
+                            parent.UpdateTableName(data[4]['database'], data[4]['old_table_name'], data[4]['new_table_name']);
                             break;
                     }
                 }
@@ -439,6 +485,7 @@
             col_name = form_data = select =  null;
         }
         
+        //删除表
         function dele_table(){
             var data = new Array();
             data['src'] = location.href.slice((location.href.lastIndexOf("/")));
@@ -448,6 +495,27 @@
             parent.IframeSend(data);
         }
         
+        //清除表
+        function truncate_table(){
+            var data = new Array();
+            data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+            data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/TruncateTable';
+            data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
+            data['data'] += '"table" : "<?= $data['table'] ?>", "database" : "<?= $data['database'] ?>"}';
+            parent.IframeSend(data);
+        }
+        
+        //重命名
+        function rename_table(){
+            if ($("#new_table_name").val() != ''){
+                var data = new Array();
+                data['src'] = location.href.slice((location.href.lastIndexOf("/")));
+                data['api'] = location.href.slice(0, location.href.lastIndexOf("/")) + '/index.php/TableInfo/RenameTable';
+                data['data'] = '{"user_key" : "<?= $user_key ?>", "user_name" : "<?= $user_name ?>",';
+                data['data'] += '"old_table_name" : "<?= $data['table'] ?>", "new_table_name" : "' + $("#new_table_name").val() + '", "database" : "<?= $data['database'] ?>"}';
+                parent.IframeSend(data);
+            }
+        }
         
     </script>
 </html>
