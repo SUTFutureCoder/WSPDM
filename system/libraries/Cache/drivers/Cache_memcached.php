@@ -161,29 +161,42 @@ class CI_Cache_memcached extends CI_Driver {
 				}
 			}
 		}
-
-		$this->_memcached = new Memcached();
+                
+                if (extension_loaded('memcached')){
+                    $this->_memcached = new Memcached();
+                } else {
+                    $this->_memcached = new Memcache();
+                }
+//		$this->_memcached = new Memcached();
 
 		foreach ($this->_memcache_conf as $name => $cache_server)
 		{
 			if ( ! array_key_exists('hostname', $cache_server))
 			{
-				$cache_server['hostname'] = $this->_default_options['default_host'];
+//				$cache_server['hostname'] = $this->_default_options['default_host'];
+				$cache_server['hostname'] = $this->_memcache_conf['default']['default_host'];
 			}
 
 			if ( ! array_key_exists('port', $cache_server))
 			{
-				$cache_server['port'] = $this->_default_options['default_port'];
+//				$cache_server['port'] = $this->_default_options['default_port'];
+				$cache_server['port'] = $this->_memcache_conf['default']['default_port'];
 			}
 	
 			if ( ! array_key_exists('weight', $cache_server))
 			{
-				$cache_server['weight'] = $this->_default_options['default_weight'];
+//				$cache_server['weight'] = $this->_default_options['default_weight'];
+				$cache_server['weight'] = $this->_memcache_conf['default']['default_weight'];
 			}
 	
-			$this->_memcached->addServer(
-					$cache_server['hostname'], $cache_server['port'], $cache_server['weight']
-			);
+                        if (extension_loaded('memcached')){
+                            $this->_memcached->addserver($cache_server['hostname'], $cache_server['port'], $cache_server['weight']);
+                        } else {
+                            $this->_memcached->addserver($cache_server['hostname'], $cache_server['port'], TRUE, $cache_server['weight']);
+                        }
+//			$this->_memcached->addServer(
+//					$cache_server['hostname'], $cache_server['port'], $cache_server['weight']
+//			);
 		}
 	}
 
@@ -198,7 +211,7 @@ class CI_Cache_memcached extends CI_Driver {
 	 */
 	public function is_supported()
 	{
-		if ( ! extension_loaded('memcached'))
+		if ( ! extension_loaded('memcached') && !extension_loaded('memcache'))
 		{
 			log_message('error', 'The Memcached Extension must be loaded to use Memcached Cache.');
 			return FALSE;

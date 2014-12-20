@@ -126,24 +126,23 @@
                 <table class="table table-hover table-bordered" >                       
                     <tbody>  
                         <form role="form" id="insert_list">
-                    <?php foreach ($data['cols'] as $col_name => $col_type): ?> 
-                            <tr id="insert_<?= $col_name ?>">
+                        <?php foreach ($data['cols'] as $col_name => $col_type): ?> 
+                        <tr id="insert_<?= $col_name ?>">
                             <td><?= $col_name ?></td>
                             <td><?= $data['cols'][$col_name]['length'] ?></td>
                             <td>
                                 <div class="form-group">
-                        <?php if (1 == $data['cols'][$col_name]['type']): ?>
-                            <input type="checkbox" name="<?= $col_name ?>" class="form-control cbx" id="insert_<?= $col_name ?>_val">
-                        <?php elseif (253 == $data['cols'][$col_name]['type']): ?>
-                            <textarea class="form-control" name="<?= $col_name ?>" rows="3" id="insert_<?= $col_name ?>_val"></textarea>
-                        <?php else: ?>
-                            <input type="text" class="form-control" name="<?= $col_name ?>" id="insert_<?= $col_name ?>_val">
-                        <?php endif; ?>
+                                    <?php if (1 == $data['cols'][$col_name]['type']): ?>
+                                        <input type="checkbox" name="<?= $col_name ?>" class="form-control cbx" id="insert_<?= $col_name ?>_val">
+                                    <?php elseif (253 == $data['cols'][$col_name]['type']): ?>
+                                        <textarea class="form-control" name="<?= $col_name ?>" rows="3" id="insert_<?= $col_name ?>_val"></textarea>
+                                    <?php else: ?>
+                                        <input type="text" class="form-control" name="<?= $col_name ?>" id="insert_<?= $col_name ?>_val">
+                                    <?php endif; ?>
                                 </div>
-                                
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
                         </form>
                     </tbody>
                 </table>

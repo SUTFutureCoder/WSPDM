@@ -289,7 +289,7 @@ class Event
    
    public static function getApiData($url, $data, $key = null){
         $ch = curl_init();
-        $timeout = 300;
+        $timeout = 0;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_REFERER, $_SERVER['REMOTE_ADDR']);   //构造来路    
         curl_setopt($ch, CURLOPT_POST, true);   
